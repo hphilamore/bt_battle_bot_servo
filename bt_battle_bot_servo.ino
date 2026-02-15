@@ -37,7 +37,6 @@
  */
 
 #include <ESP32Servo.h>
-#include <ESP32Servo.h>
 
 Servo myservo;  // create servo object to control a servo
 // 16 servo objects can be created on the ESP32
@@ -52,7 +51,7 @@ int servoPin = 17;
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
 int servoPin = 7;
 #else
-int servoPin = 18;
+int servoPin = 21; // 18;
 #endif
 
 
@@ -67,9 +66,9 @@ void setup() {
 
 	// Allow allocation of all timers
 	ESP32PWM::allocateTimer(0);
-	ESP32PWM::allocateTimer(1);
-	ESP32PWM::allocateTimer(2);
-	ESP32PWM::allocateTimer(3);
+	// ESP32PWM::allocateTimer(1);
+	// ESP32PWM::allocateTimer(2);
+	// ESP32PWM::allocateTimer(3);
 	myservo.setPeriodHertz(50);    // standard 50 hz servo
 	myservo.attach(servoPin, 1000, 2000); // attaches the servo on pin 18 to the servo object
 	// using default min/max of 1000us and 2000us
