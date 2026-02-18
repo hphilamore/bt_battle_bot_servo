@@ -61,6 +61,22 @@ int pos = 0;    // variable to store the servo position
 int servo_pin1 = 21;
 int servo_pin2 = 22;
 
+// DC Motor A
+const int enA = 25;
+const int in1 = 16;
+const int in2 = 17;
+
+// DC Motor B
+const int enB = 26;
+const int in3 = 18;
+const int in4 = 19;
+
+// DC PWM settings
+const int freq = 5000;    // 5 kHz PWM frequency
+const int resolution = 8; // 8-bit resolution (0-255)
+const int channelA = 6;   // PWM channel for ENA
+const int channelB = 7;   // PWM channel for ENB
+
 // This callback gets called any time a new gamepad is connected.
 // Up to 4 gamepads can be connected at the same time.
 void onConnectedController(ControllerPtr ctl) {
@@ -229,13 +245,70 @@ void processGamepad(ControllerPtr ctl) {
     //                         0x40 /* strongMagnitude */);
     // }
 
-    // int speed = 200;
+    
     int pos = 0;
+    int speed = 200;
 
-    // digitalWrite(in1, LOW);
-    // digitalWrite(in2, LOW);
-    // digitalWrite(in3, LOW);
-    // digitalWrite(in4, LOW);
+    digitalWrite(in1, LOW);
+    digitalWrite(in2, LOW);
+    digitalWrite(in3, LOW);
+    digitalWrite(in4, LOW);
+
+    // -- Control DC wheels with right joystick ---
+    if (ctl->axisRY() <= -400){
+    Serial.println("Forward");
+    // Forward
+    digitalWrite(in1, HIGH);
+    digitalWrite(in2, LOW);
+    digitalWrite(in3, LOW);
+    digitalWrite(in4, HIGH);
+    ledcWrite(channelA, speed); // Speed 0-255
+    ledcWrite(channelB, speed);
+    }
+
+    else if (ctl->axisRY() >= 400){
+    Serial.println("Backward");
+    // Backward
+    digitalWrite(in1, LOW);
+    digitalWrite(in2, HIGH);
+    digitalWrite(in3, HIGH);
+    digitalWrite(in4, LOW);
+    ledcWrite(channelA, speed); // Speed 0-255
+    ledcWrite(channelB, speed);
+    }
+
+    else if (ctl->axisRX() >= 400){
+    Serial.println("Left");
+    // Left
+    digitalWrite(in1, HIGH);
+    digitalWrite(in2, LOW);
+    digitalWrite(in3, HIGH);
+    digitalWrite(in4, LOW);
+    ledcWrite(channelA, speed); // Speed 0-255
+    ledcWrite(channelB, speed);
+    }
+
+    else if (ctl->axisRX() <= -400){
+    Serial.println("Right");
+    // Left
+    digitalWrite(in1, LOW);
+    digitalWrite(in2, HIGH);
+    digitalWrite(in3, LOW);
+    digitalWrite(in4, HIGH);
+    ledcWrite(channelA, speed); // Speed 0-255
+    ledcWrite(channelB, speed);
+    }
+
+    else {
+    Serial.println("Stop");
+    // Stop
+    digitalWrite(in1, LOW);
+    digitalWrite(in2, LOW);
+    digitalWrite(in3, LOW);
+    digitalWrite(in4, LOW);
+    ledcWrite(channelA, 0); // Speed 0-255
+    ledcWrite(channelB, 0);
+    }
 
     // -- Control servo wheels with left joystick ---
     if (ctl->axisY() <= -400){
@@ -396,15 +469,30 @@ void setup() {
 
 	// Allow allocation of all timers
 	ESP32PWM::allocateTimer(0);
-	// ESP32PWM::allocateTimer(1);
-	// ESP32PWM::allocateTimer(2);
-	// ESP32PWM::allocateTimer(3);
+	ESP32PWM::allocateTimer(1);
+	ESP32PWM::allocateTimer(2);
+	ESP32PWM::allocateTimer(3);
 	servo1.setPeriodHertz(50);    // standard 50 hz servo
 	servo1.attach(servo_pin1, 1000, 2000); // attaches the servo on pin 18 to the servo object
     servo2.attach(servo_pin2, 1000, 2000); // attaches the servo on pin 18 to the servo object
 	// using default min/max of 1000us and 2000us
 	// different servos may require different min/max settings
 	// for an accurate 0 to 180 sweep
+
+    // ---- DC Motor logic ----
+    pinMode(in1, OUTPUT);
+    pinMode(in2, OUTPUT);
+    pinMode(in3, OUTPUT);
+    pinMode(in4, OUTPUT);
+
+    // ---- DC Motor PWM ----
+    ledcSetup(channelA, freq, resolution);
+    ledcAttachPin(enA, channelA);
+
+    ledcSetup(channelB, freq, resolution);
+    ledcAttachPin(enB, channelB);
+
+
 }
 
 void loop() {
@@ -421,8 +509,8 @@ void loop() {
     // Detailed info here:
     // https://stackoverflow.com/questions/66278271/task-watchdog-got-triggered-the-tasks-did-not-reset-the-watchdog-in-time
 
-    //     vTaskDelay(1);
-    delay(150);
+    vTaskDelay(1);
+    // delay(150);
 
 	// Serial.println("sweep");
 	// for (pos = 0; pos <= 180; pos += 1) { // goes from 0 degrees to 180 degrees
