@@ -93,8 +93,17 @@ void onConnectedController(ControllerPtr ctl) {
     if (myControllers[0] != nullptr) {
         Serial.println("A controller is already connected. Rejecting new one.");
 
-        // Optional: rumble briefly to indicate rejection
+        // Rumble briefly to indicate rejection
         // ctl->playDualRumble(0, 200, 0x40, 0x40);
+
+        // LED flash to indicate rejection
+        digitalWrite(ledPin, HIGH);
+        delay(500);
+        digitalWrite(ledPin, LOW);
+        delay(500);
+        digitalWrite(ledPin, HIGH);
+        delay(500);
+        digitalWrite(ledPin, LOW);
 
         return;
     }
