@@ -10,6 +10,8 @@ ControllerPtr myControllers[BP32_MAX_GAMEPADS];
 
 Servo servo1;  // create servo object to control a servo
 Servo servo2;  // create servo object to control a servo
+Servo servo3;  // create servo object to control a servo
+Servo servo4;  // create servo object to control a servo
 // 16 servo objects can be created on the ESP32
 
 int pos = 0;    // variable to store the servo position
@@ -27,8 +29,8 @@ int pos = 0;    // variable to store the servo position
 
 int servo_pin1 = 21;
 int servo_pin2 = 22;
-// int servo_pin1 = 32;
-// int servo_pin2 = 33;
+int servo_pin3 = 32;
+int servo_pin4 = 33;
 
 // DC Motor A
 const int enA = 25;
@@ -350,45 +352,46 @@ void processGamepad(ControllerPtr ctl) {
     ledcWrite(channelB, 0);
     }
 
+    int servo_speed = 45; // 0 (min) to 90 (max)
+    int servo_stop_speed = 90; 
+
     // -- Control servo wheels with left joystick ---
     if (ctl->axisY() <= -400){
     Serial.println("Forward");
-    // Forward
-    pos = 180;
-    servo1.write(pos);
+    servo1.write(servo_stop_speed + servo_speed);
+    servo2.write(servo_stop_speed - servo_speed);
     }
 
     else if (ctl->axisY() >= 400){
     Serial.println("Backward");
-    // Backward
-    pos = 0;
-    servo1.write(pos);
+    servo1.write(servo_stop_speed - servo_speed);
+    servo2.write(servo_stop_speed + servo_speed);
     }
 
     else if (ctl->axisX() >= 400){
     Serial.println("Left");
-    // Left
-    pos = 180;
-    servo1.write(pos);
+    servo1.write(servo_stop_speed + servo_speed);
+    servo2.write(servo_stop_speed + servo_speed);
     }
 
     else if (ctl->axisX() <= -400){
     Serial.println("Right");
-    // Right
-    pos = 0;
-    servo1.write(pos);
+    servo1.write(servo_stop_speed - servo_speed);
+    servo2.write(servo_stop_speed - servo_speed);
     }
 
     else {
     Serial.println("Stop");
-    // Stop
-    pos = 90;
-    servo1.write(pos);
+    servo1.write(servo_stop_speed);
+    servo2.write(servo_stop_speed);
     } 
 
     // -- Control servo weapon with right trigger ---
     pos = map(ctl->throttle(), 0, 1023, 0, 180);
-    servo2.write(pos);
+    servo3.write(pos);
+
+    pos = map(ctl->brake(), 0, 1023, 0, 180);
+    servo4.write(pos);
 
 	// Serial.println("sweep");
 	// for (pos = 0; pos <= 180; pos += 1) { // goes from 0 degrees to 180 degrees
@@ -517,8 +520,13 @@ void setup() {
 	ESP32PWM::allocateTimer(2);
 	ESP32PWM::allocateTimer(3);
 	servo1.setPeriodHertz(50);    // standard 50 hz servo
+    servo2.setPeriodHertz(50);    // standard 50 hz servo
+    servo3.setPeriodHertz(50);    // standard 50 hz servo
+    servo4.setPeriodHertz(50);    // standard 50 hz servo
 	servo1.attach(servo_pin1, 1000, 2000); // attaches the servo on pin 18 to the servo object
     servo2.attach(servo_pin2, 1000, 2000); // attaches the servo on pin 18 to the servo object
+    servo3.attach(servo_pin3, 1000, 2000); // attaches the servo on pin 18 to the servo object
+    servo4.attach(servo_pin4, 1000, 2000); // attaches the servo on pin 18 to the servo object
 	// using default min/max of 1000us and 2000us
 	// different servos may require different min/max settings
 	// for an accurate 0 to 180 sweep
