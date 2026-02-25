@@ -53,53 +53,97 @@ const int ledPin = 2;   // Change to whatever GPIO you’re using
 
 // This callback gets called any time a new gamepad is connected.
 // Up to 4 gamepads can be connected at the same time.
-void onConnectedController(ControllerPtr ctl) {
-    bool foundEmptySlot = false;
-    for (int i = 0; i < BP32_MAX_GAMEPADS; i++) {
-        if (myControllers[i] == nullptr) {
-            Serial.printf("CALLBACK: Controller is connected, index=%d\n", i);
-            // Additionally, you can get certain gamepad properties like:
-            // Model, VID, PID, BTAddr, flags, etc.
-            ControllerProperties properties = ctl->getProperties();
-            Serial.printf("Controller model: %s, VID=0x%04x, PID=0x%04x\n", ctl->getModelName().c_str(), properties.vendor_id,
-                           properties.product_id);
-            myControllers[i] = ctl;
+// void onConnectedController(ControllerPtr ctl) {
+//     bool foundEmptySlot = false;
+//     for (int i = 0; i < BP32_MAX_GAMEPADS; i++) {
+           // Check index is empty
+//         if (myControllers[i] == nullptr) {
+//             Serial.printf("CALLBACK: Controller is connected, index=%d\n", i);
+//             
+               // Additionally, you can get certain gamepad properties like:
+//             // Model, VID, PID, BTAddr, flags, etc.
+//             ControllerProperties properties = ctl->getProperties();
+//             Serial.printf("Controller model: %s, VID=0x%04x, PID=0x%04x\n", ctl->getModelName().c_str(), properties.vendor_id,
+//                            properties.product_id);
+
+//             // Connect controller at current index
+//             myControllers[i] = ctl;
             
-            // Rumble to show controller is connected
-            ctl->playDualRumble(0 /* delayedStartMs */, 250 /* durationMs */, 0x80 /* weakMagnitude */,
-                                 0x40 /* strongMagnitude */);
+//             // Rumble to show controller is connected
+//             ctl->playDualRumble(0 /* delayedStartMs */, 250 /* durationMs */, 0x80 /* weakMagnitude */,
+//                                  0x40 /* strongMagnitude */);
 
-            // LED on to show controller is connected
-            digitalWrite(ledPin, HIGH);   
+//             // LED on to show controller is connected
+//             digitalWrite(ledPin, HIGH);   
 
-            foundEmptySlot = true;
+//             foundEmptySlot = true;
 
-            break;
-        }
+//             break;
+//         }
+//     }
+//     if (!foundEmptySlot) {
+//         Serial.println("CALLBACK: Controller connected, but could not found empty slot");
+//     }
+// }
+
+void onConnectedController(ControllerPtr ctl) {
+    // This callback gets called any time a new gamepad is connected.
+
+    // If we already have a controller connected to index 0, reject any new ones
+    if (myControllers[0] != nullptr) {
+        Serial.println("A controller is already connected. Rejecting new one.");
+
+        // Optional: rumble briefly to indicate rejection
+        // ctl->playDualRumble(0, 200, 0x40, 0x40);
+
+        return;
     }
-    if (!foundEmptySlot) {
-        Serial.println("CALLBACK: Controller connected, but could not found empty slot");
-    }
+
+    // Accept the controller in slot 0 only
+    myControllers[0] = ctl;
+
+    Serial.println("Controller connected to this robot.");
+
+    // Rumble to confirm connection
+    ctl->playDualRumble(0, 250, 0x80, 0x40);
+
+    // Turn on board blue LED ON
+    digitalWrite(ledPin, HIGH);
 }
 
+// void onDisconnectedController(ControllerPtr ctl) {
+//     bool foundController = false;
+
+//     for (int i = 0; i < BP32_MAX_GAMEPADS; i++) {
+//         // Check which index the disconnecting gamepad was connected to 
+//         if (myControllers[i] == ctl) {
+//             Serial.printf("CALLBACK: Controller disconnected from index=%d\n", i);
+//             myControllers[i] = nullptr;
+
+//             // LED off to show controller disconnected
+//             digitalWrite(ledPin, LOW);   
+
+//             foundController = true;
+//             break;
+//         }
+//     }
+
+//     if (!foundController) {
+//         Serial.println("CALLBACK: Controller disconnected, but not found in myControllers");
+//     }
+// }
+
 void onDisconnectedController(ControllerPtr ctl) {
-    bool foundController = false;
 
-    for (int i = 0; i < BP32_MAX_GAMEPADS; i++) {
-        if (myControllers[i] == ctl) {
-            Serial.printf("CALLBACK: Controller disconnected from index=%d\n", i);
-            myControllers[i] = nullptr;
+    // If controller disconnected, free up index 0 for controllers to connect to 
+    if (myControllers[0] == ctl) {
 
-            // LED off to show controller disconnected
-            digitalWrite(ledPin, LOW);   
+        Serial.println("Controller disconnected.");
 
-            foundController = true;
-            break;
-        }
-    }
+        myControllers[0] = nullptr;
 
-    if (!foundController) {
-        Serial.println("CALLBACK: Controller disconnected, but not found in myControllers");
+        // Turn on-board blue LED OFF
+        digitalWrite(ledPin, LOW);
     }
 }
 
